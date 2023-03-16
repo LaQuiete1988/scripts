@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+export $(grep -v '^#' ../.env | xargs)
+
+releaseServerIp=${FTP_SERVER}
+releaseServerUser=${FTP_USER}
+ftpPassword=${FTP_PASSWORD}
+
+if [[ $(docker exec touchon_php-fpm ls /var/www/ | grep server) ]]; then
+      docker exec touchon_php-fpm mv server server.$(date +'%d.%m.%Y')
+      #docker exec touchon_php-fpm rm -r server
+fi
+
+docker exec touchon_php-fpm wget -r -nd --user=$releaseServerUser --password=$ftpPassword ftp://$releaseServerIp/core-release-$1.zip
+docker exec touchon_php-fpm unzip core-release-$1.zip
+docker exec touchon_php-fpm rm /var/www/core-release-$1.zip
+docker exec touchon_php-fpm sed -i \
+      -e 's/localhost/mysql/' \
+      -e 's/127.0.0.1/php-fpm/' \
+      -e "s/\$dbname =.*/\$dbname = getenv(\'MYSQL_DATABASE\');/g" \
+      -e "s/\$dbuser =.*/\$dbuser = getenv(\'MYSQL_USER\');/g" \
+      -e "s/\$dbpass =.*/\$dbpass = getenv(\'MYSQL_PASSWORD\');/g" \
+      server/include.php
+    docker exec touchon_php-fpm sed -i 's/127.0.0.1/php-fpm/' server/server.php
+    docker exec touchon_php-fpm sed -i \
+      's/php -f thread.php/cd \".ROOT_DIR.\" \&\& php -f thread.php/' server/classes/SendSocket.php
+    docker exec touchon_php-fpm /bin/sh -c 'chown -R www-data:www-data /var/www/server/userscripts \
+      && chmod -R 770 /var/www/server/userscripts \
+      && [[ -L adm/storage/app/scripts ]] || ln -s /var/www/server/userscripts adm/storage/app/scripts'
+

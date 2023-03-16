@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+export $(grep -v '^#' ../.env | xargs)
+
+releaseServerIp=${FTP_SERVER}
+releaseServerUser=${FTP_USER}
+ftpPassword=${FTP_PASSWORD}
+
+if [[ $(docker exec touchon_php-fpm ls /var/www/ | grep adm) ]]; then
+      docker exec touchon_php-fpm mv adm adm.$(date +'%d.%m.%Y')
+      #docker exec touchon_php-fpm rm -r adm
+fi
+
+docker exec touchon_php-fpm wget -r -nd --user=$releaseServerUser --password=$ftpPassword ftp://$releaseServerIp/adm-release-$1.zip
+docker exec touchon_php-fpm unzip adm-release-$1.zip
+docker exec touchon_php-fpm rm adm-release-$1.zip
+docker cp ../containers/php-fpm/apps/. touchon_php-fpm:/var/www/adm/
+docker exec touchon_php-fpm /bin/sh -c 'php adm/artisan config:clear \
+      && php adm/artisan key:generate --force \
+      && chown -R www-data:www-data adm \
+      && find /var/www/adm -type f -exec chmod 644 {} \+ \
+      && find /var/www/adm -type d -exec chmod 755 {} \+ \
+      && chmod -R ug+rwx /var/www/adm/storage /var/www/adm/bootstrap/cache \
+      && php adm/artisan migrate --seed --force \
+      && [[ -L adm/storage/app/scripts ]] || ln -s /var/www/server/userscripts adm/storage/app/scripts'
