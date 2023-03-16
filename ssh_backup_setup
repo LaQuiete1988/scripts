@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-docker exec touchon_backup ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N "" -C $(hostname)
+export $(grep -v '^#' ~/.env | xargs)
+
+docker exec touchon_backup ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N "" -C ${CLIENT_DIR}
 docker exec touchon_backup /bin/sh -c \
 "cat /root/.ssh/id_rsa.pub | sshpass -p \${SSH_SERVER_PASSWORD} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \${SSH_USER}@\${SSH_SERVER} -p \${SSH_PORT} 'cat >> ~/.ssh/authorized_keys'"
 
