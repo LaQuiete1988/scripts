@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export $(grep -v '^#' ../.env | xargs)
+export $(grep -v '^#' ~/.env | xargs)
 
 releaseServerIp=${FTP_SERVER}
 releaseServerUser=${FTP_USER}
@@ -14,7 +14,7 @@ fi
 docker exec touchon_php-fpm wget -r -nd --user=$releaseServerUser --password=$ftpPassword ftp://$releaseServerIp/adm-release-$1.zip
 docker exec touchon_php-fpm unzip adm-release-$1.zip
 docker exec touchon_php-fpm rm adm-release-$1.zip
-docker cp ../containers/php-fpm/apps/. touchon_php-fpm:/var/www/adm/
+docker cp ~/containers/php-fpm/apps/. touchon_php-fpm:/var/www/adm/
 docker exec touchon_php-fpm /bin/sh -c 'php adm/artisan config:clear \
       && php adm/artisan key:generate --force \
       && chown -R www-data:www-data adm \
