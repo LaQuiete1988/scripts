@@ -2,7 +2,14 @@
 
 export $(grep -v '^#' ~/.env | xargs)
 
-docker exec touchon_backup ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N "" -C ${CLIENT_DIR}
+if [[ "${SSH_CLIENT_DIR:-unset}" == "unset" ]]; then
+    read -p 'Set SSH_CLIENT_DIR: ' sshClientDir
+    sed -i "s/SSH_CLIENT_DIR=.*/SSH_CLIENT_DIR=${sshClientDir}/" ~/.env
+fi
+
+cd ~/containers && docker-compose up -d backup && cd ~
+
+docker exec touchon_backup ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N "" -C ${SSH_CLIENT_DIR}
 docker exec touchon_backup /bin/sh -c \
 "cat /root/.ssh/id_rsa.pub | sshpass -p \${SSH_SERVER_PASSWORD} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \${SSH_USER}@\${SSH_SERVER} -p \${SSH_PORT} 'cat >> ~/.ssh/authorized_keys'"
 
