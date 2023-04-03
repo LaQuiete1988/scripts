@@ -10,7 +10,7 @@ fi
 cd ~/containers && docker-compose up -d backup && cd ~
 
 docker exec touchon_backup /bin/sh -c \
-    "rm /root/.ssh/* \
+    "[[ -f /root/.ssh/id_rsa ]] && rm /root/.ssh/* \
     && ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N '' -C \${SSH_CLIENT_DIR}"
 docker exec touchon_backup /bin/sh -c \
     "sshpass -p \${SSH_SERVER_PASSWORD} \
