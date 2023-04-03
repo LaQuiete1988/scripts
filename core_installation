@@ -11,9 +11,10 @@ if [[ $(docker exec touchon_php-fpm ls /var/www/ | grep server) ]]; then
       #docker exec touchon_php-fpm rm -r server
 fi
 
-docker exec touchon_php-fpm wget -r -nd --user=$releaseServerUser --password=$ftpPassword ftp://$releaseServerIp/core-release-$1.zip
-docker exec touchon_php-fpm unzip core-release-$1.zip
-docker exec touchon_php-fpm rm /var/www/core-release-$1.zip
+docker exec touchon_php-fpm wget -r -nd --user=$releaseServerUser --password=$ftpPassword \
+      ftp://$releaseServerIp/core-release-${1:-latest}.zip
+docker exec touchon_php-fpm unzip core-release-${1:-latest}.zip
+docker exec touchon_php-fpm rm /var/www/core-release-${1:-latest}.zip
 docker exec touchon_php-fpm sed -i \
       -e 's/localhost/mysql/' \
       -e 's/127.0.0.1/php-fpm/' \

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+export $(grep -v '^#' ~/.env | xargs)
+
+if [[ $(docker exec touchon_backup ls /var/backup | grep -c daily) == 0 ]]; then
+    echo "No local backup"
+    docker exec touchon_backup /bin/sh -c "[[ ! -d \${SSH_SOURCE_DIR}/daily ]] && mkdir \${SSH_SOURCE_DIR}/daily \
+    && [[ ! -d \${SSH_SOURCE_DIR}/weekly ]] && mkdir \${SSH_SOURCE_DIR}/weekly \
+    && scp -P \${SSH_PORT} -o StrictHostKeyChecking=no \
+    \${SSH_USER}@\${SSH_SERVER}:\${SSH_BACKUP_DIR}/\${SSH_CLIENT_DIR}/* \${SSH_SOURCE_DIR} \
+    && tar zxf \${SSH_SOURCE_DIR}/daily.tar.gz -C \${SSH_SOURCE_DIR}/daily \
+    && rm \${SSH_SOURCE_DIR}/*.tar.gz"
+else
+

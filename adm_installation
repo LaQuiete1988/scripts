@@ -11,9 +11,10 @@ if [[ $(docker exec touchon_php-fpm ls /var/www/ | grep adm) ]]; then
       #docker exec touchon_php-fpm rm -r adm
 fi
 
-docker exec touchon_php-fpm wget -r -nd --user=$releaseServerUser --password=$ftpPassword ftp://$releaseServerIp/adm-release-$1.zip
-docker exec touchon_php-fpm unzip adm-release-$1.zip
-docker exec touchon_php-fpm rm adm-release-$1.zip
+docker exec touchon_php-fpm wget -r -nd --user=$releaseServerUser --password=$ftpPassword \
+      ftp://$releaseServerIp/adm-release-${1:-latest}.zip
+docker exec touchon_php-fpm unzip adm-release-${1:-latest}.zip
+docker exec touchon_php-fpm rm adm-release-${1:-latest}.zip
 docker cp ~/containers/php-fpm/apps/. touchon_php-fpm:/var/www/adm/
 docker exec touchon_php-fpm /bin/sh -c 'php adm/artisan config:clear \
       && php adm/artisan key:generate --force \
